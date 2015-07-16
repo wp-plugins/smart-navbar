@@ -1,0 +1,44 @@
+#smart-navbar {
+  display: none;
+  background: #ffffff;
+  width: 100%;
+/*  margin-right: 0px;*/
+  left: 0px;
+  top:0px;
+  position: fixed;
+  z-index: 9999;  
+  text-align:center;
+  padding:5px 0px 5px 0px;
+  border-bottom: 1px solid silver;
+  box-shadow: 0px 2px 8px #CCCCCC;
+}
+#smart-navbar H3 {
+  font-size: 1.0em;
+  font-weight: lighter;
+/*  margin: 0; */
+  display:inline-block;
+}
+#smart-navbar .author {
+  font-weight: lighter;
+/*  margin: 0.1em; */
+  display:inline-block;
+}
+#smart-navbar .categories-links {
+  font-weight: lighter;
+/*  margin: 0.1em; */
+  display:inline-block;
+}
+#smart-navbar-center,#smart-navbar-left,#smart-navbar-right {
+  display:inline-block;
+}  
+#smart-navbar-left {
+  float:left;
+  padding-left:1em;
+}
+#smart-navbar-right {
+  float:right;
+  padding-right:1em;
+}
+.fa { color: gray; padding-right:0.5em; cursor:pointer;}
+.fa-arrow-circle-left:hover, .fa-arrow-circle-right:hover, .fa-bars:hover { color: orange; }
+.fa-heart, .fa-bookmark, .fa-share-square { color: orange; }
