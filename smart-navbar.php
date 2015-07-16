@@ -5,7 +5,7 @@ Plugin URI: http://www.loudlever.com/wordpress-plugins/smart-navbar/
 Description: Give readers the ability to favorite and bookmark POSTs with this simply styled navigation bar.
 Author: Loudlever
 Author URI: http://www.loudlever.com
-Version: 0.0.4
+Version: 0.1.0
 
   Copyright 2014-2015 Loudlever (wordpress@loudlever.com)
 
@@ -43,7 +43,7 @@ if ( !function_exists( 'add_action' ) ) {
   OPTION SETTINGS
 ---------------------------------------------------------------------------------
 */  
-define('SNB_PLUGIN_VERSION', '0.0.1');
+define('SNB_PLUGIN_VERSION', '0.1.0');
 define('SNB_INCLUDE_URL', plugins_url('includes',__FILE__));
 define('SNB_ADMIN_PAGE','smart-navbar');
 define('SNB_ADMIN_PAGE_NONCE','_snb-save-options');

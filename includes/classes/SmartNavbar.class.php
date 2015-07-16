@@ -25,10 +25,12 @@ class SmartNavbar {
   var $page_shortcode = '__SMARTNAVBAR_FAVORITES_LIST_GOES_HERE__';
   var $page_permalink = null;
   var $page_title = 'Bookmarks and Favorites';
+  var $defaults = array('on_page' => true,'on_home' => false);
   
   public function __construct() {
 	  // initialize the dates
 	  $this->options = get_option($this->opt_key);
+	  $this->check_plugin_version();
   }   
 
   public function __destruct() {
@@ -78,15 +80,28 @@ class SmartNavbar {
       wp_die('Error','Unable to save change',400); 
     }
   }
+  public function update_options($form) {
+    $this->log("In update options!!");
+    $message = null;
+    if(isset($_POST['save_settings'])) {
+      $this->log("we have the post");
+      check_admin_referer(SNB_ADMIN_PAGE_NONCE);
+      if (isset($_POST['snb_opt'])) {
+        $message = 'Your updates have been saved.';
+        $opts = $_POST['snb_opt'];
+        $this->options[options] = $opts;
+        update_option($this->opt_key,$this->options);
+      }
+      return $message;
+    }
+  }
   public function configuration_screen() {
     if (is_user_logged_in() && is_admin() ){
       $page_link = get_permalink($this->options[post_id]);
       
-      // $message = $this->update_options($_POST);
-      // $opts = get_option(SNB_PLUGIN_OPTTIONS);
-      // $posts = $this->get_post_meta();
-      // $existing = array();
-      
+      $message = $this->update_options($_POST);
+      $opts = $this->options[options];
+      $this->log(sprintf("OPTIONS: %s",print_r($opts,1)));
       if ($message) {
         printf('<div id="message" class="updated fade"><p>%s</p></div>',$message);
       } elseif ($this->error) { // reload the form post in this form
@@ -132,7 +147,7 @@ class SmartNavbar {
                 $this->sidebar_link('Home','https://wordpress.org/plugins//','Plugin Homepage'); 
                 $this->sidebar_link('Suggestion','https://wordpress.org/support/plugin/','Suggestions'); 
                 $this->sidebar_link('Contact','mailto:wordpress@loudlever.com','Contact Us'); 
-                $this->sidebar_link('More','https://wordpress.org/plugins/search.php?q=loudlever','More Plugins by Us'); 
+                $this->sidebar_link('More','https://wordpress.org/plugins/tags/loudlever','More Plugins by Us'); 
             	  $this->html_box_footer(true); 
 ?>  
             </div>
@@ -141,14 +156,33 @@ class SmartNavbar {
           <div class="has-sidebar sm-padded">
   					<div id="post-body-content" class="has-sidebar-content">
   						<div class="meta-box-sortabless">
-                <?php
-                  if(function_exists('wp_nonce_field')){ wp_nonce_field(SNB_ADMIN_PAGE_NONCE); }
-                ?>   
                 <!-- Default Settings -->
                 <?php $this->html_box_header('snb_default_asins',__('Overview',$this->i18n),true); ?>
   						  <p>Readers will be able to view their Bookmarks and Favorites on the page: <a href='<?php echo $page_link; ?>'><?php echo $this->page_title; ?></a></p>
   						  <p>Feel free the <?php echo edit_post_link('modify the page','','',$this->options[post_id]); ?> if you wish.  Just remember to keep the following shortcode in the page:</p>
   						  <p><code>[<?php echo $this->page_shortcode; ?>]</code>.</p>
+  						  <?php $this->html_box_footer(true); ?>  
+  						  
+                <form method="post" action="admin.php?page=<?php echo SNB_ADMIN_PAGE; ?>">
+                  <?php
+                    if(function_exists('wp_nonce_field')){ wp_nonce_field(SNB_ADMIN_PAGE_NONCE); }
+                  ?>   
+                  <?php $this->html_box_header('snb_default_asins',__('Settings',$this->i18n),true); ?>
+                  <p>By default, the nav bar will only display on POSTs.  Check below where you would also like it to display.</p>
+                  <p>
+                    <input type='hidden' name="snb_opt[on_page]" value='0'/>
+                    <input type="checkbox" name="snb_opt[on_page]" id="snb_on_page" class='amznpp_input' value="1" <?php if ($opts[on_page] == 1) { echo 'checked'; } ?> />
+                    <label class='snb_label' for='snb_on_page'>Display on Pages?</label>
+                  </p>
+                  <p>
+                    <input type='hidden' name="snb_opt[on_home]" value='0'/>
+                    <input type="checkbox" name="snb_opt[on_home]" id="snb_on_home" class='amznpp_input' value="1" <?php if ($opts[on_home] == 1) { echo 'checked'; } ?> />
+                    <label class='snb_label' for='snb_on_home'>Display on Home?</label>
+                    <input type="hidden" name="save_settings" value="1" />
+                  </p>
+                  <?php $this->html_box_footer(true); ?>  
+                  <input type="submit" class="button-primary" name="save_button" value="<?php _e('Update Settings', $this->i18n); ?>" />
+    	          </form>
               </div>
             </div>
           </div>
@@ -170,7 +204,14 @@ EOF;
   }
   public function header_bar( &$wp_query) {
     global $wp_the_query,$post;
-    if ( ( $wp_query === $wp_the_query ) && !is_admin() && !is_feed() && !is_robots() && !is_trackback() && !is_home() && !is_page())  {
+    $opts = $this->options[options];
+    // $this->log(sprintf("showing header bar\n home ops: %s\nis home %s\n front page %s", $opts[on_home], is_home(),is_front_page()));
+    // will never show here
+    if (is_admin() || is_feed() || is_robots() || is_trackback()) { return; }
+    // Don't show here if toggled off
+    if (is_home() && !$opts[on_home]) { return; }
+    if (is_page() && !$opts[on_page]) { return; }
+    if (  $wp_query === $wp_the_query )  {
       $this->log(sprintf("post => %s",print_r($post,1)));
       $author = get_the_author_meta('display_name',$post->post_author);
       $author_link = sprintf("<a href='%s'>%s</a>",get_author_posts_url($post->post_author),$author );
@@ -353,7 +394,8 @@ EOF;
         'install_date'    => null,
         'upgrade_date'    => null
       ),
-      'post_id' => null
+      'post_id' => null,
+      'options' => $this->defaults
     );
     return;
   }
@@ -407,7 +449,18 @@ EOF;
   }
   // http://codex.wordpress.org/Creating_Tables_with_Plugins
   private function upgrade_plugin($opts) {
-    // No updates yet.
+    $ver = $this->get_version_as_int($this->options['plugin']['version_current']);
+    $this->log("in upgrade_plugin(): Version = $ver");
+    if ($ver < 10) {
+      // we don't have the defaults
+      $this->options[options] = $this->defaults;
+    }
+    $this->options[plugin][version_last] = $this->options[plugin][version_current];
+    $this->options[plugin][version_current] = SNB_PLUGIN_VERSION;
+    $this->options[plugin][upgrade_date] = Date('Y-m-d');
+    $this->log(sprintf("upgrading plugin with opts %s",print_r($this->options,1)));
+    update_option($this->opt_key,$this->options);
+    return;
   }
 
   // Update the user's action in the database.
@@ -472,6 +525,10 @@ EOF;
       wp_delete_post($post_id);
     }
     return;
+  }
+  private function get_version_as_int($str) {
+    $var = intval(preg_replace("/[^0-9 ]/", '', $str));
+    return $var;
   }
 
 
